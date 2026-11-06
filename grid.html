@@ -24,10 +24,12 @@
   .head h1{font-size:25px;font-weight:700}
   .head p{font-size:13px;color:var(--mute);margin-top:2px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
-  .banner{display:flex;align-items:center;gap:13px;border-radius:18px;padding:16px;margin-bottom:12px;border:1px solid}
+  .banner{display:flex;align-items:flex-end;gap:10px;border-radius:18px;padding:14px 16px;margin-bottom:12px;border:1px solid}
   .banner.on{background:var(--onbg);border-color:#bbe8c6}
   .banner.off{background:var(--offbg);border-color:#f6c9c9}
   .banner.unk{background:#f1f5f9;border-color:var(--line)}
+  .bmain{display:flex;align-items:center;gap:13px;flex:1;min-width:0}
+  .upd{flex:none;background:rgba(255,255,255,.65);border:1px solid var(--line);color:var(--mute);font-size:11px;border-radius:999px;padding:4px 9px;white-space:nowrap}
   .dot{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:23px}
   .banner.on .dot{background:var(--on)} .banner.off .dot{background:var(--off)} .banner.unk .dot{background:var(--unk)}
   .banner .t{font-size:19px;font-weight:700}
@@ -86,16 +88,14 @@
 </style>
 </head>
 <body>
-  <div class="head">
-    <h1>⚡ الوطني</h1>
-    <p id="updated">جارِ التحميل…</p>
-  </div>
-
   <div id="err" class="err"></div>
 
   <div id="banner" class="banner unk">
-    <div class="dot">⚪</div>
-    <div><div class="t" id="bTitle">—</div><div class="s" id="bSub"></div></div>
+    <div class="bmain">
+      <div class="dot">⚪</div>
+      <div><div class="t" id="bTitle">—</div><div class="s" id="bSub"></div></div>
+    </div>
+    <span class="upd" id="updated">جارِ التحميل…</span>
   </div>
 
   <!-- period selector -->
@@ -130,10 +130,6 @@
   </div>
 
   <div class="card">
-    <div class="loghead">
-      <h3 style="margin:0">سجل الانقطاعات</h3>
-      <button id="clearDay" class="clearday">كل الأيام ✕</button>
-    </div>
     <table>
       <thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المدة</th></tr></thead>
       <tbody id="outBody"><tr><td colspan="4" class="empty"><span style="color:var(--mute)">…</span></td></tr></tbody>
@@ -157,6 +153,15 @@ const tm = (d) => new Date(d).toLocaleTimeString("ar-IQ", { timeZone: TZ, hour: 
 const dayName = (d) => new Date(d).toLocaleDateString("ar-IQ", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" });
 const ar = (n) => Number(n).toLocaleString("ar-IQ");
 function dur(ms){ const m = Math.max(0, Math.round(ms/60000)), h = Math.floor(m/60); return h ? `${ar(h)} س ${ar(m%60)} د` : `${ar(m)} د`; }
+// relative-day prefix for a timestamp (returns "", "أمس ", "أول أمس ", "قبل N أيام ")
+function relDay(d){
+  const diff = Math.round((dayStart(keyOf(new Date())) - dayStart(keyOf(new Date(d)))) / DAY);
+  if (diff <= 0) return "";
+  if (diff === 1) return "أمس ";
+  if (diff === 2) return "أول أمس ";
+  const unit = diff <= 10 ? "أيام" : "يومًا";
+  return `قبل ${ar(diff)} ${unit} `;
+}
 
 const keyOf = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
 const dayStart = (key) => new Date(key + "T00:00:00+03:00").getTime();
@@ -201,11 +206,11 @@ function render(d, r){
   if(d.grid_on === true){
     b.className = "banner on"; b.querySelector(".dot").textContent = "🟢";
     $("bTitle").textContent = "الوطنية موجودة الآن";
-    $("bSub").textContent = lastEnded ? "رجعت الساعة " + tm(lastEnded.ended_at) : "";
+    $("bSub").textContent = lastEnded ? "رجعت " + relDay(lastEnded.ended_at) + "الساعة " + tm(lastEnded.ended_at) : "";
   } else if(d.grid_on === false){
     b.className = "banner off"; b.querySelector(".dot").textContent = "🔴";
     $("bTitle").textContent = "الوطنية مقطوعة الآن";
-    $("bSub").textContent = open ? `منذ ${dur(now-new Date(open.started_at).getTime())} · انقطعت ${tm(open.started_at)}` : "";
+    $("bSub").textContent = open ? `منذ ${dur(now-new Date(open.started_at).getTime())} · انقطعت ${relDay(open.started_at)}${tm(open.started_at)}` : "";
   } else {
     b.className = "banner unk"; b.querySelector(".dot").textContent = "⚪";
     $("bTitle").textContent = "غير معروف"; $("bSub").textContent = "";
@@ -250,7 +255,6 @@ function highlightDay(){
 
 function renderLog(){
   const list = selDay ? lastOuts.filter(o => keyOf(new Date(o.started_at)) === selDay) : lastOuts;
-  $("clearDay").style.display = selDay ? "inline-block" : "none";
   const emptyMsg = selDay ? "لا توجد انقطاعات في هذا اليوم" : "لا توجد انقطاعات مسجّلة في هذه المدة";
   $("outBody").innerHTML = list.length ? list.map(o => {
     const end = o.ended_at ? tm(o.ended_at) : "<b style='color:var(--off)'>مستمر</b>";
@@ -278,7 +282,6 @@ $("timeline").addEventListener("click", (e) => {
   highlightDay(); renderLog();
   $(".loghead") && document.querySelector(".loghead").scrollIntoView({ behavior:"smooth", block:"center" });
 });
-$("clearDay").addEventListener("click", () => { selDay = ""; highlightDay(); renderLog(); });
 
 (function initDates(){
   const today = keyOf(new Date()), weekAgo = keyOf(new Date(Date.now() - 6*DAY));
@@ -286,6 +289,7 @@ $("clearDay").addEventListener("click", () => { selDay = ""; highlightDay(); ren
   $("fromD").value = weekAgo; $("fromD").max = today;
 })();
 
+selDay = keyOf(new Date());   // focus on the current day when the app opens
 load();
 setInterval(() => { if(!document.hidden && mode !== "custom") load(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden && mode !== "custom") load(); });
