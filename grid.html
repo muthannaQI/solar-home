@@ -64,17 +64,19 @@
     font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:18px;padding:14px;margin-bottom:12px;
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--glass-sh)}
-  .banner{display:flex;flex-direction:column;gap:10px;border-radius:18px;padding:14px 16px;margin-bottom:12px;border:1px solid;
+  .banner{border-radius:18px;padding:14px 16px;margin-bottom:12px;border:1px solid;
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--glass-sh)}
   .banner.on{background:var(--onbg);border-color:var(--onbrd)}
   .banner.off{background:var(--offbg);border-color:var(--offbrd)}
   .banner.unk{background:var(--unkbg);border-color:var(--unkbrd)}
   .bmain{display:flex;align-items:center;gap:13px}
-  .upd{align-self:flex-end;background:var(--pill);border:1px solid var(--glass-brd);color:var(--mute);font-size:11px;border-radius:999px;padding:4px 9px;white-space:nowrap;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  .btext{flex:1;min-width:0}
+  .trow{display:flex;align-items:center;gap:8px}
+  .upd{flex:none;background:var(--pill);border:1px solid var(--glass-brd);color:var(--mute);font-size:11px;border-radius:999px;padding:4px 9px;white-space:nowrap;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   .dot{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:23px}
   .banner.on .dot{background:var(--on)} .banner.off .dot{background:var(--off)} .banner.unk .dot{background:var(--unk)}
-  .banner .t{font-size:19px;font-weight:700;white-space:nowrap}
-  .banner .s{font-size:13.5px;color:var(--mute)}
+  .banner .t{flex:1;min-width:0;font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .banner .s{font-size:13.5px;color:var(--mute);margin-top:1px}
   /* period selector */
   .seg{display:flex;background:var(--seg-bg);border:1px solid var(--glass-brd);border-radius:13px;padding:4px;margin-bottom:10px;gap:2px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
   .seg button{flex:1;border:none;background:transparent;color:var(--mute);font-size:12.5px;font-weight:600;
@@ -130,9 +132,11 @@
   <div id="banner" class="banner unk">
     <div class="bmain">
       <div class="dot">⚪</div>
-      <div><div class="t" id="bTitle">—</div><div class="s" id="bSub"></div></div>
+      <div class="btext">
+        <div class="trow"><span class="t" id="bTitle">—</span><span class="upd" id="updated">جارِ التحميل…</span></div>
+        <div class="s" id="bSub"></div>
+      </div>
     </div>
-    <span class="upd" id="updated">جارِ التحميل…</span>
   </div>
 
   <!-- period selector -->
@@ -150,8 +154,6 @@
   </div>
 
   <div class="card">
-    <h3 id="tlTitle">الخط الزمني</h3>
-    <div class="hint">اضغط على أي يوم لعرض انقطاعاته في السجل بالأسفل.</div>
     <div class="tl-head">
       <span class="d"></span>
       <span class="barlbl">خلال اليوم (٢٤ ساعة)</span>
@@ -237,7 +239,7 @@ function render(d, r){
 
   const ok = d.last_ok ? new Date(d.last_ok) : null;
   const ageMin = ok ? (now - ok.getTime())/60000 : null;
-  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ آخر تحديث قبل " + dur(now-ok.getTime()) : "آخر تحديث " + tm(d.last_ok)) : "—";
+  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ قبل " + dur(now-ok.getTime()) : "🕑 " + tm(d.last_ok)) : "—";
 
   const b = $("banner"), open = outs.find(o => !o.ended_at), lastEnded = outs.find(o => o.ended_at);
   if(d.grid_on === true){
@@ -252,8 +254,6 @@ function render(d, r){
     b.className = "banner unk"; b.querySelector(".dot").textContent = "⚪";
     $("bTitle").textContent = "غير معروف"; $("bSub").textContent = "";
   }
-
-  $("tlTitle").textContent = "الخط الزمني — " + r.title;
 
   // timeline rows: اليوم | شريط | عدد | إجمالي المدة
   const sFrom = dayStart(r.from), sTo = dayStart(r.to);
