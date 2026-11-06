@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b2a4a">
+<title>مواعيد الكهرباء الوطنية — الحي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef3f9; --card:#ffffff; --text:#0b2a4a; --mute:#64748b; --line:#e2e8f0;
+    --on:#16a34a; --onbg:#e7f7ec; --off:#dc2626; --offbg:#fdeaea; --unk:#94a3b8; --base:#f1f5f9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
+    padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 28px);
+    max-width:560px;margin:0 auto}
+  .head{text-align:center;margin-bottom:14px}
+  .head h1{font-size:22px;font-weight:700}
+  .head p{font-size:13px;color:var(--mute);margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+  .banner{display:flex;align-items:center;gap:14px;border-radius:18px;padding:18px;margin-bottom:12px;border:1px solid}
+  .banner.on{background:var(--onbg);border-color:#bbe8c6}
+  .banner.off{background:var(--offbg);border-color:#f6c9c9}
+  .banner.unk{background:#f1f5f9;border-color:var(--line)}
+  .dot{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .banner.on .dot{background:var(--on)} .banner.off .dot{background:var(--off)} .banner.unk .dot{background:var(--unk)}
+  .banner .t{font-size:20px;font-weight:700}
+  .banner .s{font-size:14px;color:var(--mute)}
+  .stat{display:flex;justify-content:space-between;align-items:center}
+  .stat .v{font-size:22px;font-weight:700}
+  .stat .v small{font-size:13px;color:var(--mute);font-weight:500}
+  h3{font-size:14px;color:var(--mute);font-weight:600;margin-bottom:12px}
+  .tl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .tl-row .d{width:80px;font-size:12px;color:var(--mute);flex:none}
+  .bar{flex:1;height:16px;border-radius:5px;background:var(--base);position:relative;overflow:hidden;border:1px solid var(--line)}
+  .bar i{position:absolute;top:0;bottom:0;background:var(--off)}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:14px;height:10px;border-radius:3px;display:inline-block}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:12px;color:var(--mute);font-weight:600;text-align:right;padding:7px 6px;border-bottom:1px solid var(--line)}
+  td{padding:9px 6px;border-bottom:1px solid #eef2f7;font-variant-numeric:tabular-nums;font-size:14px}
+  tr:last-child td{border-bottom:none}
+  .empty{text-align:center;color:var(--mute);padding:18px}
+  .foot{text-align:center;font-size:12px;color:var(--mute);margin-top:4px;line-height:1.8}
+  .refresh{display:block;margin:2px auto 14px;background:var(--card);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:8px 18px;font-size:14px;cursor:pointer}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--text);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{background:var(--offbg);border:1px solid #f6c9c9;color:#b42318;border-radius:12px;padding:12px;text-align:center;font-size:14px;display:none}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>⚡ مواعيد الكهرباء الوطنية</h1>
+    <p id="updated">جارِ التحميل…</p>
+  </div>
+
+  <div id="err" class="err"></div>
+
+  <div id="banner" class="banner unk">
+    <div class="dot">⚪</div>
+    <div><div class="t" id="bTitle">—</div><div class="s" id="bSub"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="stat"><h3 style="margin:0">ساعات الوطنية اليوم</h3><div class="v"><span id="todayHours">—</span><small> ساعة</small></div></div>
+  </div>
+
+  <div class="card">
+    <h3>آخر ٧ أيام</h3>
+    <div id="timeline"></div>
+    <div class="legend">
+      <span><i style="background:var(--base);border:1px solid var(--line)"></i> موجودة</span>
+      <span><i style="background:var(--off)"></i> مقطوعة</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>سجل الانقطاعات</h3>
+    <table>
+      <thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المدة</th></tr></thead>
+      <tbody id="outBody"><tr><td colspan="4" class="empty"><span class="spin"></span></td></tr></tbody>
+    </table>
+  </div>
+
+  <button class="refresh" id="refreshBtn">⟳ تحديث</button>
+  <div class="foot">
+    تُعرض مواعيد الكهرباء الوطنية فقط لهذا الحي.<br>
+    التحديث تلقائي كل دقيقة · بدأ التسجيل حديثاً.
+  </div>
+
+<script>
+const API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-grid?k=a990c3f834ee8c7c00dedba9";
+const TZ = "Asia/Baghdad";
+const $ = (id) => document.getElementById(id);
+
+const tm = (d) => new Date(d).toLocaleTimeString("ar-IQ", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+const dayName = (d) => new Date(d).toLocaleDateString("ar-IQ", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" });
+const ar = (n) => Number(n).toLocaleString("ar-IQ");
+function dur(ms){ const m = Math.max(0, Math.round(ms/60000)), h = Math.floor(m/60); return h ? `${ar(h)} س ${ar(m%60)} د` : `${ar(m)} د`; }
+
+async function load(){
+  try{
+    const r = await fetch(API + "&days=7", { cache: "no-store" });
+    if(!r.ok) throw new Error(r.status === 403 ? "الرابط لم يعد صالحاً" : "تعذّر الاتصال ("+r.status+")");
+    render(await r.json());
+    $("err").style.display = "none";
+  }catch(e){ $("updated").textContent = "غير متصل"; $("err").textContent = e.message; $("err").style.display = "block"; }
+}
+
+function render(d){
+  const outs = d.outages || [];
+  // last update
+  const ok = d.last_ok ? new Date(d.last_ok) : null;
+  const ageMin = ok ? (Date.now() - ok.getTime())/60000 : null;
+  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ آخر تحديث قبل " + dur(Date.now()-ok.getTime()) : "آخر تحديث " + tm(d.last_ok)) : "—";
+
+  // banner
+  const b = $("banner"), open = outs.find(o => !o.ended_at);
+  const lastEnded = outs.find(o => o.ended_at);
+  if(d.grid_on === true){
+    b.className = "banner on"; b.querySelector(".dot").textContent = "🟢";
+    $("bTitle").textContent = "الوطنية موجودة الآن";
+    $("bSub").textContent = lastEnded ? "رجعت الساعة " + tm(lastEnded.ended_at) : "";
+  } else if(d.grid_on === false){
+    b.className = "banner off"; b.querySelector(".dot").textContent = "🔴";
+    $("bTitle").textContent = "الوطنية مقطوعة الآن";
+    $("bSub").textContent = open ? `منذ ${dur(Date.now()-new Date(open.started_at).getTime())} · انقطعت ${tm(open.started_at)}` : "";
+  } else {
+    b.className = "banner unk"; b.querySelector(".dot").textContent = "⚪";
+    $("bTitle").textContent = "غير معروف"; $("bSub").textContent = "";
+  }
+
+  $("todayHours").textContent = d.today_grid_hours == null ? "—" : ar(Number(d.today_grid_hours).toFixed(1));
+
+  // 7-day timeline
+  const fmtDay = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
+  const rows = [];
+  for(let i=0;i<7;i++){
+    const ref = new Date(Date.now() - i*86400e3);
+    const key = fmtDay.format(ref);
+    const start = new Date(key+"T00:00:00+03:00").getTime(), end = start + 86400e3;
+    let segs = "";
+    for(const o of outs){
+      const a = Math.max(start, new Date(o.started_at).getTime());
+      const z = Math.min(end, o.ended_at ? new Date(o.ended_at).getTime() : Date.now());
+      if(z > a) segs += `<i style="right:${(a-start)/864e5*100}%;width:${(z-a)/864e5*100}%"></i>`;
+    }
+    rows.push(`<div class="tl-row"><span class="d">${i? dayName(ref) : "اليوم"}</span><div class="bar">${segs}</div></div>`);
+  }
+  $("timeline").innerHTML = rows.join("");
+
+  // table
+  $("outBody").innerHTML = outs.length ? outs.map(o => {
+    const end = o.ended_at ? tm(o.ended_at) : "<b style='color:var(--off)'>مستمر</b>";
+    const ms = (o.ended_at ? new Date(o.ended_at) : new Date()) - new Date(o.started_at);
+    return `<tr><td>${dayName(o.started_at)}</td><td>${tm(o.started_at)}</td><td>${end}</td><td>${dur(ms)}</td></tr>`;
+  }).join("") : `<tr><td colspan="4" class="empty">لا توجد انقطاعات مسجّلة</td></tr>`;
+}
+
+$("refreshBtn").addEventListener("click", async () => {
+  const b = $("refreshBtn"); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+  await load(); b.disabled = false; b.textContent = "⟳ تحديث";
+});
+
+load();
+setInterval(() => { if(!document.hidden) load(); }, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) load(); });
+</script>
+</body>
+</html>
