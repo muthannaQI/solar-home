@@ -50,8 +50,14 @@
   .sum .v{font-size:22px;font-weight:700}
   .sum .k{font-size:12px;color:var(--mute);margin-top:2px}
   h3{font-size:14px;color:var(--mute);font-weight:600;margin-bottom:12px}
-  .tl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .tl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;padding:2px 4px;border-radius:9px;transition:.12s}
+  .tl-row:hover{background:#f4f7fb}
+  .tl-row.sel{background:#e8effb}
+  .tl-row.sel .d{color:var(--text);font-weight:700}
+  .tl-row.sel .bar{box-shadow:0 0 0 2px var(--text)}
   .tl-row .d{width:82px;font-size:12px;color:var(--mute);flex:none}
+  .tl-row .dsum{width:58px;font-size:12px;color:var(--mute);text-align:left;flex:none;font-variant-numeric:tabular-nums}
+  .tl-row.sel .dsum{color:var(--text);font-weight:600}
   .bar{flex:1;height:14px;border-radius:5px;background:var(--nodata);position:relative;overflow:hidden;border:1px solid var(--line)}
   .bar i{position:absolute;top:0;bottom:0}
   .bar i.on{background:var(--onfill)}
@@ -221,21 +227,22 @@ function render(d, r){
   const todayStart = dayStart(keyOf(new Date()));
   const rows = [];
   for(let i=0;i<n;i++){
-    const dayS = sTo - i*DAY, dayE = dayS + DAY;
+    const dayS = sTo - i*DAY, dayE = dayS + DAY, key = keyOf(new Date(dayS));
     // green = covered (monitored) AND not future
-    let segs = "";
+    let segs = "", offMs = 0;
     const gS = Math.max(dayS, since), gE = Math.min(dayE, now);
     if(gE > gS) segs += `<i class="on" style="right:${(gS-dayS)/DAY*100}%;width:${(gE-gS)/DAY*100}%"></i>`;
-    // red outages on top
+    // red outages on top + accumulate the day's outage time
     for(const o of outs){
       const a = Math.max(dayS, new Date(o.started_at).getTime());
       const z = Math.min(dayE, o.ended_at ? new Date(o.ended_at).getTime() : now);
-      if(z > a) segs += `<i class="off" style="right:${(a-dayS)/DAY*100}%;width:${(z-a)/DAY*100}%"></i>`;
+      if(z > a){ segs += `<i class="off" style="right:${(a-dayS)/DAY*100}%;width:${(z-a)/DAY*100}%"></i>`; offMs += z - a; }
     }
     const label = dayS === todayStart ? "اليوم" : dayName(dayS);
-    rows.push(`<div class="tl-row"><span class="d">${label}</span><div class="bar">${segs}</div></div>`);
+    rows.push(`<div class="tl-row" data-key="${key}"><span class="d">${label}</span><div class="bar">${segs}</div><span class="dsum">${offMs > 0 ? dur(offMs) : "٠"}</span></div>`);
   }
   $("timeline").innerHTML = rows.join("");
+  highlightDay();
 
   // outage log (filterable by a selected day)
   lastOuts = outs; lastRange = r;
@@ -270,6 +277,12 @@ function renderLog(){
   }).join("") : `<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
 }
 
+// highlight the timeline row matching the selected day
+function highlightDay(){
+  const key = $("daySel").value;
+  document.querySelectorAll("#timeline .tl-row").forEach(r => r.classList.toggle("sel", !!key && r.dataset.key === key));
+}
+
 function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span class="spin"></span></td></tr>`; }
 
 // selector
@@ -281,7 +294,16 @@ $("seg").addEventListener("click", (e) => {
   if(mode !== "custom"){ busy(); load(); }
 });
 $("goBtn").addEventListener("click", () => { busy(); load(); });
-$("daySel").addEventListener("change", renderLog);
+$("daySel").addEventListener("change", () => { renderLog(); highlightDay(); });
+
+// click a timeline day → filter the log to that day (click again to clear)
+$("timeline").addEventListener("click", (e) => {
+  const row = e.target.closest(".tl-row"); if(!row) return;
+  const key = row.dataset.key;
+  $("daySel").value = ($("daySel").value === key) ? "" : key;
+  renderLog(); highlightDay();
+  document.querySelector(".loghead").scrollIntoView({ behavior:"smooth", block:"center" });
+});
 
 $("refreshBtn").addEventListener("click", async () => {
   const b = $("refreshBtn"); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
