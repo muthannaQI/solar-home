@@ -16,68 +16,72 @@
     --on:#16a34a; --onfill:#34c759; --onbg:#e7f7ec; --off:#dc2626; --offbg:#fdeaea;
     --unk:#94a3b8; --nodata:#eef2f7; --base:#f1f5f9;
   }
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
-  body{background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
-    padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 28px);
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;
+    padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 26px);
     max-width:560px;margin:0 auto}
-  .head{text-align:center;margin-bottom:14px}
-  .head h1{font-size:26px;font-weight:700}
+  .head{text-align:center;margin-bottom:12px}
+  .head h1{font-size:25px;font-weight:700}
   .head p{font-size:13px;color:var(--mute);margin-top:2px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
-  .banner{display:flex;align-items:center;gap:14px;border-radius:18px;padding:18px;margin-bottom:12px;border:1px solid}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+  .banner{display:flex;align-items:center;gap:13px;border-radius:18px;padding:16px;margin-bottom:12px;border:1px solid}
   .banner.on{background:var(--onbg);border-color:#bbe8c6}
   .banner.off{background:var(--offbg);border-color:#f6c9c9}
   .banner.unk{background:#f1f5f9;border-color:var(--line)}
-  .dot{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .dot{width:44px;height:44px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:23px}
   .banner.on .dot{background:var(--on)} .banner.off .dot{background:var(--off)} .banner.unk .dot{background:var(--unk)}
-  .banner .t{font-size:20px;font-weight:700}
-  .banner .s{font-size:14px;color:var(--mute)}
+  .banner .t{font-size:19px;font-weight:700}
+  .banner .s{font-size:13.5px;color:var(--mute)}
   /* period selector */
   .seg{display:flex;background:var(--base);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:10px;gap:2px}
-  .seg button{flex:1;border:none;background:transparent;color:var(--mute);font-size:13.5px;font-weight:600;
-    padding:9px 2px;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s}
+  .seg button{flex:1;border:none;background:transparent;color:var(--mute);font-size:12.5px;font-weight:600;
+    padding:9px 1px;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
   .seg button.act{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(13,42,74,.1)}
   .custom{display:none;gap:8px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap}
   .custom.show{display:flex}
-  .fld{flex:1;min-width:120px}
+  .fld{flex:1;min-width:110px}
   .fld label{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
   .fld input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;
     font-family:inherit;color:var(--text);background:var(--card)}
-  .custom .go{background:var(--text);color:#fff;border:none;border-radius:10px;padding:10px 18px;
-    font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .custom .go{background:var(--text);color:#fff;border:none;border-radius:10px;padding:10px 20px;
+    font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;flex:1}
   .sumrow{display:flex;gap:10px;margin-bottom:12px}
-  .sum{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
-  .sum .v{font-size:22px;font-weight:700}
-  .sum .k{font-size:12px;color:var(--mute);margin-top:2px}
-  h3{font-size:14px;color:var(--mute);font-weight:600;margin-bottom:12px}
-  .tl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;padding:2px 4px;border-radius:9px;transition:.12s}
-  .tl-row:hover{background:#f4f7fb}
+  .sum{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 8px;text-align:center}
+  .sum .v{font-size:21px;font-weight:700}
+  .sum .k{font-size:11.5px;color:var(--mute);margin-top:2px}
+  h3{font-size:14px;color:var(--mute);font-weight:600;margin-bottom:10px}
+  .hint{font-size:11.5px;color:var(--mute);margin:-4px 0 10px}
+  /* timeline */
+  .tl-head{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11px;color:var(--mute);font-weight:600}
+  .tl-head .barlbl{flex:1;text-align:center}
+  .tl-head .cnt{color:var(--mute);font-weight:600}
+  .tl-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;cursor:pointer;padding:3px 4px;border-radius:9px;transition:.12s}
+  .tl-row:active{background:#eef3f9}
   .tl-row.sel{background:#e8effb}
   .tl-row.sel .d{color:var(--text);font-weight:700}
   .tl-row.sel .bar{box-shadow:0 0 0 2px var(--text)}
-  .tl-row .d{width:82px;font-size:12px;color:var(--mute);flex:none}
-  .tl-row .dsum{width:58px;font-size:12px;color:var(--mute);text-align:left;flex:none;font-variant-numeric:tabular-nums}
-  .tl-row.sel .dsum{color:var(--text);font-weight:600}
+  .d{width:74px;font-size:11px;color:var(--mute);flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bar{flex:1;height:14px;border-radius:5px;background:var(--nodata);position:relative;overflow:hidden;border:1px solid var(--line)}
   .bar i{position:absolute;top:0;bottom:0}
   .bar i.on{background:var(--onfill)}
   .bar i.off{background:var(--off)}
-  .legend{display:flex;gap:14px;justify-content:center;margin-top:10px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+  .cnt{width:30px;flex:none;text-align:center;font-size:13px;font-weight:700;color:var(--off);font-variant-numeric:tabular-nums}
+  .cnt.z{color:var(--unk);font-weight:500}
+  .dsum{width:52px;flex:none;text-align:left;font-size:11.5px;color:var(--mute);font-variant-numeric:tabular-nums}
+  .tl-row.sel .dsum{color:var(--text);font-weight:600}
+  .legend{display:flex;gap:12px;justify-content:center;margin-top:12px;font-size:11.5px;color:var(--mute);flex-wrap:wrap}
   .legend span{display:flex;align-items:center;gap:5px}
-  .legend i{width:14px;height:10px;border-radius:3px;display:inline-block}
-  .loghead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-  .daysel{border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;font-family:inherit;
-    color:var(--text);background:var(--card);max-width:55%}
+  .legend i{width:13px;height:10px;border-radius:3px;display:inline-block}
+  /* log */
+  .loghead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .clearday{border:1px solid var(--line);background:var(--base);color:var(--text);border-radius:999px;
+    padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:none}
   table{width:100%;border-collapse:collapse}
-  th{font-size:12px;color:var(--mute);font-weight:600;text-align:right;padding:7px 6px;border-bottom:1px solid var(--line)}
-  td{padding:9px 6px;border-bottom:1px solid #eef2f7;font-variant-numeric:tabular-nums;font-size:14px}
+  th{font-size:12px;color:var(--mute);font-weight:600;text-align:right;padding:7px 5px;border-bottom:1px solid var(--line)}
+  td{padding:9px 5px;border-bottom:1px solid #eef2f7;font-variant-numeric:tabular-nums;font-size:14px}
   tr:last-child td{border-bottom:none}
-  .empty{text-align:center;color:var(--mute);padding:18px}
-  .foot{text-align:center;font-size:12px;color:var(--mute);margin-top:4px;line-height:1.8}
-  .refresh{display:block;margin:2px auto 14px;background:var(--card);border:1px solid var(--line);color:var(--text);
-    border-radius:10px;padding:8px 18px;font-size:14px;cursor:pointer}
-  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--text);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px}
-  @keyframes sp{to{transform:rotate(360deg)}}
+  .empty{text-align:center;color:var(--mute);padding:16px}
+  .foot{text-align:center;font-size:12px;color:var(--mute);margin-top:6px;line-height:1.8}
   .err{background:var(--offbg);border:1px solid #f6c9c9;color:#b42318;border-radius:12px;padding:12px;text-align:center;font-size:14px;display:none}
 </style>
 </head>
@@ -108,13 +112,15 @@
     <button class="go" id="goBtn">عرض</button>
   </div>
 
-  <div class="sumrow">
-    <div class="sum"><div class="v" id="sCount">—</div><div class="k">عدد الانقطاعات</div></div>
-    <div class="sum"><div class="v" id="sTotal">—</div><div class="k">إجمالي مدة الانقطاع</div></div>
-  </div>
-
   <div class="card">
     <h3 id="tlTitle">الخط الزمني</h3>
+    <div class="hint">اضغط على أي يوم لعرض انقطاعاته في السجل بالأسفل.</div>
+    <div class="tl-head">
+      <span class="d"></span>
+      <span class="barlbl">خلال اليوم (٢٤ ساعة)</span>
+      <span class="cnt">عدد</span>
+      <span class="dsum">المدة</span>
+    </div>
     <div id="timeline"></div>
     <div class="legend">
       <span><i style="background:var(--onfill)"></i> موجودة</span>
@@ -126,21 +132,16 @@
   <div class="card">
     <div class="loghead">
       <h3 style="margin:0">سجل الانقطاعات</h3>
-      <select id="daySel" class="daysel"><option value="">كل الأيام</option></select>
+      <button id="clearDay" class="clearday">كل الأيام ✕</button>
     </div>
     <table>
       <thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المدة</th></tr></thead>
-      <tbody id="outBody"><tr><td colspan="4" class="empty"><span class="spin"></span></td></tr></tbody>
+      <tbody id="outBody"><tr><td colspan="4" class="empty"><span style="color:var(--mute)">…</span></td></tr></tbody>
     </table>
   </div>
 
-  <button class="refresh" id="refreshBtn">⟳ تحديث</button>
   <div class="foot">
-    تُعرض مواعيد الكهرباء الوطنية فقط.<br>
-    التحديث تلقائي كل دقيقة.
-    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
-      © جميع الحقوق محفوظة · مثنى الصافي
-    </div>
+    © جميع الحقوق محفوظة · مثنى الصافي
   </div>
 
 <script>
@@ -149,18 +150,17 @@ const TZ = "Asia/Baghdad";
 const DAY = 86400e3;
 const $ = (id) => document.getElementById(id);
 let mode = "w1";
-let lastOuts = [], lastRange = null;   // cache so the day filter needs no refetch
+let selDay = "";                 // selected day key (from timeline click), "" = all
+let lastOuts = [], lastRange = null;
 
 const tm = (d) => new Date(d).toLocaleTimeString("ar-IQ", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 const dayName = (d) => new Date(d).toLocaleDateString("ar-IQ", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" });
 const ar = (n) => Number(n).toLocaleString("ar-IQ");
 function dur(ms){ const m = Math.max(0, Math.round(ms/60000)), h = Math.floor(m/60); return h ? `${ar(h)} س ${ar(m%60)} د` : `${ar(m)} د`; }
 
-// YYYY-MM-DD for a Date, in Baghdad time
 const keyOf = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
 const dayStart = (key) => new Date(key + "T00:00:00+03:00").getTime();
 
-// Resolve the current mode to {from,to} date-keys + a title
 function range(){
   const today = keyOf(new Date());
   if (mode === "custom"){
@@ -171,13 +171,11 @@ function range(){
   if (mode === "month"){
     const p = new Intl.DateTimeFormat("en-CA",{ timeZone:TZ, year:"numeric", month:"2-digit" }).format(new Date());
     const [y,m] = p.split("-").map(Number);
-    const last = new Date(y, m, 0).getDate();
-    const mm = String(m).padStart(2,"0");
+    const last = new Date(y, m, 0).getDate(), mm = String(m).padStart(2,"0");
     return { from:`${y}-${mm}-01`, to:`${y}-${mm}-${String(last).padStart(2,"0")}`, title:"الشهر الحالي" };
   }
   const n = mode === "w1" ? 7 : mode === "w2" ? 14 : 21;
-  const from = keyOf(new Date(Date.now() - (n-1)*DAY));
-  return { from, to:today, title: mode==="w1"?"أسبوع":mode==="w2"?"أسبوعين":"٣ أسابيع" };
+  return { from: keyOf(new Date(Date.now() - (n-1)*DAY)), to: today, title: mode==="w1"?"أسبوع":mode==="w2"?"أسبوعين":"٣ أسابيع" };
 }
 
 async function load(){
@@ -193,14 +191,12 @@ async function load(){
 function render(d, r){
   const outs = d.outages || [];
   const now = Date.now();
-  const since = d.since ? new Date(d.since).getTime() : Infinity;   // data begins here; Infinity = no data yet
+  const since = d.since ? new Date(d.since).getTime() : Infinity;
 
-  // last update
   const ok = d.last_ok ? new Date(d.last_ok) : null;
   const ageMin = ok ? (now - ok.getTime())/60000 : null;
   $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ آخر تحديث قبل " + dur(now-ok.getTime()) : "آخر تحديث " + tm(d.last_ok)) : "—";
 
-  // current status banner
   const b = $("banner"), open = outs.find(o => !o.ended_at), lastEnded = outs.find(o => o.ended_at);
   if(d.grid_on === true){
     b.className = "banner on"; b.querySelector(".dot").textContent = "🟢";
@@ -215,61 +211,47 @@ function render(d, r){
     $("bTitle").textContent = "غير معروف"; $("bSub").textContent = "";
   }
 
-  // summary
-  const totalMs = outs.reduce((a,o) => a + ((o.ended_at ? new Date(o.ended_at) : new Date()) - new Date(o.started_at)), 0);
-  $("sCount").textContent = ar(outs.length);
-  $("sTotal").textContent = outs.length ? dur(totalMs) : "٠ د";
   $("tlTitle").textContent = "الخط الزمني — " + r.title;
 
-  // timeline: one row per day, green = power on, red = outage, grey = no data
+  // timeline rows: اليوم | شريط | عدد | إجمالي المدة
   const sFrom = dayStart(r.from), sTo = dayStart(r.to);
   const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, 62);
   const todayStart = dayStart(keyOf(new Date()));
+  const validKeys = new Set();
   const rows = [];
   for(let i=0;i<n;i++){
     const dayS = sTo - i*DAY, dayE = dayS + DAY, key = keyOf(new Date(dayS));
-    // green = covered (monitored) AND not future
-    let segs = "", offMs = 0;
+    validKeys.add(key);
+    let segs = "", offMs = 0, offCount = 0;
     const gS = Math.max(dayS, since), gE = Math.min(dayE, now);
     if(gE > gS) segs += `<i class="on" style="right:${(gS-dayS)/DAY*100}%;width:${(gE-gS)/DAY*100}%"></i>`;
-    // red outages on top + accumulate the day's outage time
     for(const o of outs){
       const a = Math.max(dayS, new Date(o.started_at).getTime());
       const z = Math.min(dayE, o.ended_at ? new Date(o.ended_at).getTime() : now);
-      if(z > a){ segs += `<i class="off" style="right:${(a-dayS)/DAY*100}%;width:${(z-a)/DAY*100}%"></i>`; offMs += z - a; }
+      if(z > a){ segs += `<i class="off" style="right:${(a-dayS)/DAY*100}%;width:${(z-a)/DAY*100}%"></i>`; offMs += z - a; offCount++; }
     }
     const label = dayS === todayStart ? "اليوم" : dayName(dayS);
-    rows.push(`<div class="tl-row" data-key="${key}"><span class="d">${label}</span><div class="bar">${segs}</div><span class="dsum">${offMs > 0 ? dur(offMs) : "٠"}</span></div>`);
+    rows.push(`<div class="tl-row" data-key="${key}"><span class="d">${label}</span><div class="bar">${segs}</div>`
+      + `<span class="cnt${offCount?'':' z'}">${offCount ? ar(offCount) : "٠"}</span>`
+      + `<span class="dsum">${offMs > 0 ? dur(offMs) : "٠"}</span></div>`);
   }
   $("timeline").innerHTML = rows.join("");
-  highlightDay();
 
-  // outage log (filterable by a selected day)
+  // keep the day selection only if still in range
+  if(selDay && !validKeys.has(selDay)) selDay = "";
   lastOuts = outs; lastRange = r;
-  populateDays(r);
+  highlightDay();
   renderLog();
 }
 
-// Fill the day dropdown with every day in the current range (newest first)
-function populateDays(r){
-  const sel = $("daySel"), prev = sel.value;
-  const sFrom = dayStart(r.from), sTo = dayStart(r.to);
-  const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, 62);
-  const todayStart = dayStart(keyOf(new Date()));
-  let opts = '<option value="">كل الأيام</option>';
-  for(let i=0;i<n;i++){
-    const dayS = sTo - i*DAY, key = keyOf(new Date(dayS));
-    opts += `<option value="${key}">${dayS === todayStart ? "اليوم" : dayName(dayS)}</option>`;
-  }
-  sel.innerHTML = opts;
-  if([...sel.options].some(o => o.value === prev)) sel.value = prev;   // keep selection if still valid
+function highlightDay(){
+  document.querySelectorAll("#timeline .tl-row").forEach(r => r.classList.toggle("sel", !!selDay && r.dataset.key === selDay));
 }
 
-// Render the outage table for the selected day (or all days)
 function renderLog(){
-  const key = $("daySel").value;
-  const list = key ? lastOuts.filter(o => keyOf(new Date(o.started_at)) === key) : lastOuts;
-  const emptyMsg = key ? "لا توجد انقطاعات في هذا اليوم" : "لا توجد انقطاعات مسجّلة في هذه المدة";
+  const list = selDay ? lastOuts.filter(o => keyOf(new Date(o.started_at)) === selDay) : lastOuts;
+  $("clearDay").style.display = selDay ? "inline-block" : "none";
+  const emptyMsg = selDay ? "لا توجد انقطاعات في هذا اليوم" : "لا توجد انقطاعات مسجّلة في هذه المدة";
   $("outBody").innerHTML = list.length ? list.map(o => {
     const end = o.ended_at ? tm(o.ended_at) : "<b style='color:var(--off)'>مستمر</b>";
     const ms = (o.ended_at ? new Date(o.ended_at) : new Date()) - new Date(o.started_at);
@@ -277,43 +259,29 @@ function renderLog(){
   }).join("") : `<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
 }
 
-// highlight the timeline row matching the selected day
-function highlightDay(){
-  const key = $("daySel").value;
-  document.querySelectorAll("#timeline .tl-row").forEach(r => r.classList.toggle("sel", !!key && r.dataset.key === key));
-}
+function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span style="color:var(--mute)">…</span></td></tr>`; }
 
-function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span class="spin"></span></td></tr>`; }
-
-// selector
+// period selector
 $("seg").addEventListener("click", (e) => {
   const btn = e.target.closest("button"); if(!btn) return;
-  mode = btn.dataset.m;
+  mode = btn.dataset.m; selDay = "";
   document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("act", x === btn));
   $("custom").classList.toggle("show", mode === "custom");
   if(mode !== "custom"){ busy(); load(); }
 });
-$("goBtn").addEventListener("click", () => { busy(); load(); });
-$("daySel").addEventListener("change", () => { renderLog(); highlightDay(); });
+$("goBtn").addEventListener("click", () => { selDay = ""; busy(); load(); });
 
-// click a timeline day → filter the log to that day (click again to clear)
+// click a timeline day → filter the log (click again to clear)
 $("timeline").addEventListener("click", (e) => {
   const row = e.target.closest(".tl-row"); if(!row) return;
-  const key = row.dataset.key;
-  $("daySel").value = ($("daySel").value === key) ? "" : key;
-  renderLog(); highlightDay();
-  document.querySelector(".loghead").scrollIntoView({ behavior:"smooth", block:"center" });
+  selDay = (selDay === row.dataset.key) ? "" : row.dataset.key;
+  highlightDay(); renderLog();
+  $(".loghead") && document.querySelector(".loghead").scrollIntoView({ behavior:"smooth", block:"center" });
 });
+$("clearDay").addEventListener("click", () => { selDay = ""; highlightDay(); renderLog(); });
 
-$("refreshBtn").addEventListener("click", async () => {
-  const b = $("refreshBtn"); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
-  await load(); b.disabled = false; b.textContent = "⟳ تحديث";
-});
-
-// init custom date defaults (last 7 days), max today
 (function initDates(){
-  const today = keyOf(new Date());
-  const weekAgo = keyOf(new Date(Date.now() - 6*DAY));
+  const today = keyOf(new Date()), weekAgo = keyOf(new Date(Date.now() - 6*DAY));
   $("toD").value = today; $("toD").max = today;
   $("fromD").value = weekAgo; $("fromD").max = today;
 })();
