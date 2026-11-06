@@ -13,7 +13,8 @@
 <style>
   :root{
     --bg:#eef3f9; --card:#ffffff; --text:#0b2a4a; --mute:#64748b; --line:#e2e8f0;
-    --on:#16a34a; --onbg:#e7f7ec; --off:#dc2626; --offbg:#fdeaea; --unk:#94a3b8; --base:#f1f5f9;
+    --on:#16a34a; --onfill:#34c759; --onbg:#e7f7ec; --off:#dc2626; --offbg:#fdeaea;
+    --unk:#94a3b8; --nodata:#eef2f7; --base:#f1f5f9;
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
   body{background:var(--bg);color:var(--text);line-height:1.6;font-size:16px;
@@ -32,10 +33,18 @@
   .banner .t{font-size:20px;font-weight:700}
   .banner .s{font-size:14px;color:var(--mute)}
   /* period selector */
-  .seg{display:flex;background:var(--base);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:12px;gap:2px}
-  .seg button{flex:1;border:none;background:transparent;color:var(--mute);font-size:14px;font-weight:600;
-    padding:9px 4px;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s}
+  .seg{display:flex;background:var(--base);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:10px;gap:2px}
+  .seg button{flex:1;border:none;background:transparent;color:var(--mute);font-size:13.5px;font-weight:600;
+    padding:9px 2px;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s}
   .seg button.act{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(13,42,74,.1)}
+  .custom{display:none;gap:8px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap}
+  .custom.show{display:flex}
+  .fld{flex:1;min-width:120px}
+  .fld label{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
+  .fld input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;
+    font-family:inherit;color:var(--text);background:var(--card)}
+  .custom .go{background:var(--text);color:#fff;border:none;border-radius:10px;padding:10px 18px;
+    font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
   .sumrow{display:flex;gap:10px;margin-bottom:12px}
   .sum{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
   .sum .v{font-size:22px;font-weight:700}
@@ -43,11 +52,16 @@
   h3{font-size:14px;color:var(--mute);font-weight:600;margin-bottom:12px}
   .tl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
   .tl-row .d{width:82px;font-size:12px;color:var(--mute);flex:none}
-  .bar{flex:1;height:14px;border-radius:5px;background:var(--base);position:relative;overflow:hidden;border:1px solid var(--line)}
-  .bar i{position:absolute;top:0;bottom:0;background:var(--off)}
-  .legend{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+  .bar{flex:1;height:14px;border-radius:5px;background:var(--nodata);position:relative;overflow:hidden;border:1px solid var(--line)}
+  .bar i{position:absolute;top:0;bottom:0}
+  .bar i.on{background:var(--onfill)}
+  .bar i.off{background:var(--off)}
+  .legend{display:flex;gap:14px;justify-content:center;margin-top:10px;font-size:12px;color:var(--mute);flex-wrap:wrap}
   .legend span{display:flex;align-items:center;gap:5px}
   .legend i{width:14px;height:10px;border-radius:3px;display:inline-block}
+  .loghead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .daysel{border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;font-family:inherit;
+    color:var(--text);background:var(--card);max-width:55%}
   table{width:100%;border-collapse:collapse}
   th{font-size:12px;color:var(--mute);font-weight:600;text-align:right;padding:7px 6px;border-bottom:1px solid var(--line)}
   td{padding:9px 6px;border-bottom:1px solid #eef2f7;font-variant-numeric:tabular-nums;font-size:14px}
@@ -76,10 +90,16 @@
 
   <!-- period selector -->
   <div class="seg" id="seg">
-    <button data-d="7" class="act">أسبوع</button>
-    <button data-d="14">أسبوعين</button>
-    <button data-d="21">٣ أسابيع</button>
-    <button data-d="30">شهر</button>
+    <button data-m="w1" class="act">أسبوع</button>
+    <button data-m="w2">أسبوعين</button>
+    <button data-m="w3">٣ أسابيع</button>
+    <button data-m="month">الشهر</button>
+    <button data-m="custom">مخصّص</button>
+  </div>
+  <div class="custom" id="custom">
+    <div class="fld"><label>من</label><input type="date" id="fromD"></div>
+    <div class="fld"><label>إلى</label><input type="date" id="toD"></div>
+    <button class="go" id="goBtn">عرض</button>
   </div>
 
   <div class="sumrow">
@@ -91,13 +111,17 @@
     <h3 id="tlTitle">الخط الزمني</h3>
     <div id="timeline"></div>
     <div class="legend">
-      <span><i style="background:var(--base);border:1px solid var(--line)"></i> موجودة</span>
+      <span><i style="background:var(--onfill)"></i> موجودة</span>
       <span><i style="background:var(--off)"></i> مقطوعة</span>
+      <span><i style="background:var(--nodata);border:1px solid var(--line)"></i> لا توجد بيانات</span>
     </div>
   </div>
 
   <div class="card">
-    <h3>سجل الانقطاعات</h3>
+    <div class="loghead">
+      <h3 style="margin:0">سجل الانقطاعات</h3>
+      <select id="daySel" class="daysel"><option value="">كل الأيام</option></select>
+    </div>
     <table>
       <thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المدة</th></tr></thead>
       <tbody id="outBody"><tr><td colspan="4" class="empty"><span class="spin"></span></td></tr></tbody>
@@ -108,40 +132,70 @@
   <div class="foot">
     تُعرض مواعيد الكهرباء الوطنية فقط.<br>
     التحديث تلقائي كل دقيقة.
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">
+      © جميع الحقوق محفوظة · مثنى الصافي
+    </div>
   </div>
 
 <script>
 const API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-grid?k=a990c3f834ee8c7c00dedba9";
 const TZ = "Asia/Baghdad";
+const DAY = 86400e3;
 const $ = (id) => document.getElementById(id);
-let days = 7;
-const LABEL = { 7:"أسبوع", 14:"أسبوعين", 21:"٣ أسابيع", 30:"شهر" };
+let mode = "w1";
+let lastOuts = [], lastRange = null;   // cache so the day filter needs no refetch
 
 const tm = (d) => new Date(d).toLocaleTimeString("ar-IQ", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 const dayName = (d) => new Date(d).toLocaleDateString("ar-IQ", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" });
 const ar = (n) => Number(n).toLocaleString("ar-IQ");
 function dur(ms){ const m = Math.max(0, Math.round(ms/60000)), h = Math.floor(m/60); return h ? `${ar(h)} س ${ar(m%60)} د` : `${ar(m)} د`; }
 
+// YYYY-MM-DD for a Date, in Baghdad time
+const keyOf = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+const dayStart = (key) => new Date(key + "T00:00:00+03:00").getTime();
+
+// Resolve the current mode to {from,to} date-keys + a title
+function range(){
+  const today = keyOf(new Date());
+  if (mode === "custom"){
+    let f = $("fromD").value || today, t = $("toD").value || today;
+    if (f > t) [f, t] = [t, f];
+    return { from:f, to:t, title:`${f} ← ${t}` };
+  }
+  if (mode === "month"){
+    const p = new Intl.DateTimeFormat("en-CA",{ timeZone:TZ, year:"numeric", month:"2-digit" }).format(new Date());
+    const [y,m] = p.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    const mm = String(m).padStart(2,"0");
+    return { from:`${y}-${mm}-01`, to:`${y}-${mm}-${String(last).padStart(2,"0")}`, title:"الشهر الحالي" };
+  }
+  const n = mode === "w1" ? 7 : mode === "w2" ? 14 : 21;
+  const from = keyOf(new Date(Date.now() - (n-1)*DAY));
+  return { from, to:today, title: mode==="w1"?"أسبوع":mode==="w2"?"أسبوعين":"٣ أسابيع" };
+}
+
 async function load(){
+  const r = range();
   try{
-    const r = await fetch(API + "&days=" + days, { cache: "no-store" });
-    if(!r.ok) throw new Error(r.status === 403 ? "الرابط لم يعد صالحاً" : "تعذّر الاتصال ("+r.status+")");
-    render(await r.json());
+    const res = await fetch(`${API}&from=${r.from}&to=${r.to}`, { cache:"no-store" });
+    if(!res.ok) throw new Error(res.status === 403 ? "الرابط لم يعد صالحاً" : "تعذّر الاتصال ("+res.status+")");
+    render(await res.json(), r);
     $("err").style.display = "none";
   }catch(e){ $("updated").textContent = "غير متصل"; $("err").textContent = e.message; $("err").style.display = "block"; }
 }
 
-function render(d){
+function render(d, r){
   const outs = d.outages || [];
+  const now = Date.now();
+  const since = d.since ? new Date(d.since).getTime() : Infinity;   // data begins here; Infinity = no data yet
 
   // last update
   const ok = d.last_ok ? new Date(d.last_ok) : null;
-  const ageMin = ok ? (Date.now() - ok.getTime())/60000 : null;
-  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ آخر تحديث قبل " + dur(Date.now()-ok.getTime()) : "آخر تحديث " + tm(d.last_ok)) : "—";
+  const ageMin = ok ? (now - ok.getTime())/60000 : null;
+  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ آخر تحديث قبل " + dur(now-ok.getTime()) : "آخر تحديث " + tm(d.last_ok)) : "—";
 
   // current status banner
-  const b = $("banner"), open = outs.find(o => !o.ended_at);
-  const lastEnded = outs.find(o => o.ended_at);
+  const b = $("banner"), open = outs.find(o => !o.ended_at), lastEnded = outs.find(o => o.ended_at);
   if(d.grid_on === true){
     b.className = "banner on"; b.querySelector(".dot").textContent = "🟢";
     $("bTitle").textContent = "الوطنية موجودة الآن";
@@ -149,60 +203,102 @@ function render(d){
   } else if(d.grid_on === false){
     b.className = "banner off"; b.querySelector(".dot").textContent = "🔴";
     $("bTitle").textContent = "الوطنية مقطوعة الآن";
-    $("bSub").textContent = open ? `منذ ${dur(Date.now()-new Date(open.started_at).getTime())} · انقطعت ${tm(open.started_at)}` : "";
+    $("bSub").textContent = open ? `منذ ${dur(now-new Date(open.started_at).getTime())} · انقطعت ${tm(open.started_at)}` : "";
   } else {
     b.className = "banner unk"; b.querySelector(".dot").textContent = "⚪";
     $("bTitle").textContent = "غير معروف"; $("bSub").textContent = "";
   }
 
-  // summary for the selected period
+  // summary
   const totalMs = outs.reduce((a,o) => a + ((o.ended_at ? new Date(o.ended_at) : new Date()) - new Date(o.started_at)), 0);
   $("sCount").textContent = ar(outs.length);
   $("sTotal").textContent = outs.length ? dur(totalMs) : "٠ د";
-  $("tlTitle").textContent = "الخط الزمني — " + LABEL[days];
+  $("tlTitle").textContent = "الخط الزمني — " + r.title;
 
-  // timeline: one row per day across the selected period
-  const fmtDay = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
+  // timeline: one row per day, green = power on, red = outage, grey = no data
+  const sFrom = dayStart(r.from), sTo = dayStart(r.to);
+  const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, 62);
+  const todayStart = dayStart(keyOf(new Date()));
   const rows = [];
-  for(let i=0;i<days;i++){
-    const ref = new Date(Date.now() - i*86400e3);
-    const key = fmtDay.format(ref);
-    const start = new Date(key+"T00:00:00+03:00").getTime(), end = start + 86400e3;
+  for(let i=0;i<n;i++){
+    const dayS = sTo - i*DAY, dayE = dayS + DAY;
+    // green = covered (monitored) AND not future
     let segs = "";
+    const gS = Math.max(dayS, since), gE = Math.min(dayE, now);
+    if(gE > gS) segs += `<i class="on" style="right:${(gS-dayS)/DAY*100}%;width:${(gE-gS)/DAY*100}%"></i>`;
+    // red outages on top
     for(const o of outs){
-      const a = Math.max(start, new Date(o.started_at).getTime());
-      const z = Math.min(end, o.ended_at ? new Date(o.ended_at).getTime() : Date.now());
-      if(z > a) segs += `<i style="right:${(a-start)/864e5*100}%;width:${(z-a)/864e5*100}%"></i>`;
+      const a = Math.max(dayS, new Date(o.started_at).getTime());
+      const z = Math.min(dayE, o.ended_at ? new Date(o.ended_at).getTime() : now);
+      if(z > a) segs += `<i class="off" style="right:${(a-dayS)/DAY*100}%;width:${(z-a)/DAY*100}%"></i>`;
     }
-    rows.push(`<div class="tl-row"><span class="d">${i? dayName(ref) : "اليوم"}</span><div class="bar">${segs}</div></div>`);
+    const label = dayS === todayStart ? "اليوم" : dayName(dayS);
+    rows.push(`<div class="tl-row"><span class="d">${label}</span><div class="bar">${segs}</div></div>`);
   }
   $("timeline").innerHTML = rows.join("");
 
-  // outage log table
-  $("outBody").innerHTML = outs.length ? outs.map(o => {
+  // outage log (filterable by a selected day)
+  lastOuts = outs; lastRange = r;
+  populateDays(r);
+  renderLog();
+}
+
+// Fill the day dropdown with every day in the current range (newest first)
+function populateDays(r){
+  const sel = $("daySel"), prev = sel.value;
+  const sFrom = dayStart(r.from), sTo = dayStart(r.to);
+  const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, 62);
+  const todayStart = dayStart(keyOf(new Date()));
+  let opts = '<option value="">كل الأيام</option>';
+  for(let i=0;i<n;i++){
+    const dayS = sTo - i*DAY, key = keyOf(new Date(dayS));
+    opts += `<option value="${key}">${dayS === todayStart ? "اليوم" : dayName(dayS)}</option>`;
+  }
+  sel.innerHTML = opts;
+  if([...sel.options].some(o => o.value === prev)) sel.value = prev;   // keep selection if still valid
+}
+
+// Render the outage table for the selected day (or all days)
+function renderLog(){
+  const key = $("daySel").value;
+  const list = key ? lastOuts.filter(o => keyOf(new Date(o.started_at)) === key) : lastOuts;
+  const emptyMsg = key ? "لا توجد انقطاعات في هذا اليوم" : "لا توجد انقطاعات مسجّلة في هذه المدة";
+  $("outBody").innerHTML = list.length ? list.map(o => {
     const end = o.ended_at ? tm(o.ended_at) : "<b style='color:var(--off)'>مستمر</b>";
     const ms = (o.ended_at ? new Date(o.ended_at) : new Date()) - new Date(o.started_at);
     return `<tr><td>${dayName(o.started_at)}</td><td>${tm(o.started_at)}</td><td>${end}</td><td>${dur(ms)}</td></tr>`;
-  }).join("") : `<tr><td colspan="4" class="empty">لا توجد انقطاعات مسجّلة في هذه المدة</td></tr>`;
+  }).join("") : `<tr><td colspan="4" class="empty">${emptyMsg}</td></tr>`;
 }
 
-// period selector
+function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span class="spin"></span></td></tr>`; }
+
+// selector
 $("seg").addEventListener("click", (e) => {
   const btn = e.target.closest("button"); if(!btn) return;
-  days = +btn.dataset.d;
+  mode = btn.dataset.m;
   document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("act", x === btn));
-  $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span class="spin"></span></td></tr>`;
-  load();
+  $("custom").classList.toggle("show", mode === "custom");
+  if(mode !== "custom"){ busy(); load(); }
 });
+$("goBtn").addEventListener("click", () => { busy(); load(); });
+$("daySel").addEventListener("change", renderLog);
 
 $("refreshBtn").addEventListener("click", async () => {
   const b = $("refreshBtn"); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
   await load(); b.disabled = false; b.textContent = "⟳ تحديث";
 });
 
+// init custom date defaults (last 7 days), max today
+(function initDates(){
+  const today = keyOf(new Date());
+  const weekAgo = keyOf(new Date(Date.now() - 6*DAY));
+  $("toD").value = today; $("toD").max = today;
+  $("fromD").value = weekAgo; $("fromD").max = today;
+})();
+
 load();
-setInterval(() => { if(!document.hidden) load(); }, 60000);
-document.addEventListener("visibilitychange", () => { if(!document.hidden) load(); });
+setInterval(() => { if(!document.hidden && mode !== "custom") load(); }, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden && mode !== "custom") load(); });
 </script>
 </body>
 </html>
