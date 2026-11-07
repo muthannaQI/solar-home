@@ -8,6 +8,11 @@
 <meta name="application-name" content="الوطني">
 <meta name="apple-mobile-web-app-title" content="الوطني">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="watani.webmanifest">
+<link rel="icon" href="watani-192.png">
+<link rel="apple-touch-icon" href="watani-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -119,6 +124,13 @@
   tr:last-child td{border-bottom:none}
   .empty{text-align:center;color:var(--mute);padding:16px}
   .foot{text-align:center;font-size:12px;color:var(--mute);margin-top:6px;line-height:1.8}
+  .sheet{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.35)}
+  .sheet.show{display:flex}
+  .sheet .box{width:100%;max-width:560px;margin:0 10px calc(env(safe-area-inset-bottom) + 10px);padding:18px 18px 14px;border-radius:20px;
+    background:var(--glass);border:1px solid var(--glass-brd);box-shadow:var(--glass-sh);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+  .sheet h4{font-size:17px;margin-bottom:8px}
+  .sheet ol{padding-inline-start:20px;line-height:2;font-size:14.5px}
+  .sheet .close{margin-top:12px;width:100%;border:none;border-radius:12px;padding:11px;font:inherit;font-weight:600;background:var(--accent);color:#fff;cursor:pointer}
   .err{background:var(--offbg);border:1px solid var(--offbrd);color:var(--off);border-radius:12px;padding:12px;text-align:center;font-size:14px;display:none}
 </style>
 </head>
@@ -130,7 +142,7 @@
     <div class="bmain">
       <div class="dot">⚪</div>
       <div class="btext">
-        <div class="trow"><span class="t" id="bTitle">—</span><button id="themeBtn" class="iconbtn" aria-label="تبديل الوضع ليل/نهار">🌙</button></div>
+        <div class="trow"><span class="t" id="bTitle">—</span><button id="installBtn" class="iconbtn" aria-label="تثبيت التطبيق" style="display:none">📲</button><button id="themeBtn" class="iconbtn" aria-label="تبديل الوضع ليل/نهار">🌙</button></div>
         <div class="srow"><span class="s" id="bSub"></span><span class="upd" id="updated">جارِ التحميل…</span></div>
       </div>
     </div>
@@ -175,6 +187,14 @@
   <div class="foot">
     © جميع الحقوق محفوظة · مثنى الصافي
   </div>
+
+<div class="sheet" id="installSheet" role="dialog" aria-modal="true">
+  <div class="box">
+    <h4>📲 تثبيت تطبيق «الوطني»</h4>
+    <ol id="installSteps"></ol>
+    <button class="close" id="installClose">تم</button>
+  </div>
+</div>
 
 <script>
 const API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-grid?k=a990c3f834ee8c7c00dedba9";
@@ -346,6 +366,29 @@ $("timeline").addEventListener("click", (e) => {
     paint();
   });
   try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if(!root.getAttribute("data-theme")) paint(); }); }catch(e){}
+})();
+
+// ===== install as an app (PWA) =====
+(function(){
+  const btn = $("installBtn"), sheet = $("installSheet"), steps = $("installSteps");
+  const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  let deferred = null;
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw-grid.js", { scope: "./grid.html" }).catch(() => {});
+  if (standalone()) return;                       // already opened from the home-screen icon
+  btn.style.display = "";
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; });
+  addEventListener("appinstalled", () => { btn.style.display = "none"; deferred = null; });
+  btn.addEventListener("click", async () => {
+    if (deferred) { deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; return; }
+    steps.innerHTML = isIOS
+      ? "<li>افتح الرابط في متصفح <b>Safari</b>.</li><li>اضغط زر المشاركة <b>⬆️</b> أسفل الشاشة.</li><li>اختر <b>«إضافة إلى الشاشة الرئيسية»</b> ثم <b>«إضافة»</b>.</li>"
+      : "<li>افتح الرابط في متصفح <b>Chrome</b>.</li><li>اضغط قائمة <b>⋮</b> أعلى الشاشة.</li><li>اختر <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</li>";
+    sheet.classList.add("show");
+  });
+  $("installClose").addEventListener("click", () => sheet.classList.remove("show"));
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.classList.remove("show"); });
 })();
 
 selDay = keyOf(new Date());   // focus on the current day when the app opens
