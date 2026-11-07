@@ -62,6 +62,9 @@ h1{font-size:19px;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th{color:var(--mute);font-weight:500;font-size:12px;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
 td{padding:8px 4px;border-bottom:1px solid #20262e;font-variant-numeric:tabular-nums}
+.range{display:flex;gap:8px;margin-bottom:12px}
+.range .rf{flex:1;min-width:0;display:flex;align-items:center;gap:6px;margin:0;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:2px 10px;color:var(--mute);font-size:12.5px}
+.range .rf input{flex:1;min-width:0;width:100%;background:transparent;border:0;border-radius:0;padding:8px 0;font-size:14px;color:var(--text);color-scheme:dark}
 .seg{display:flex;background:var(--card2);border-radius:11px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;background:none;border:0;color:var(--mute);font:inherit;font-size:13px;padding:7px;border-radius:9px;cursor:pointer}
 .seg button.act{background:var(--line);color:var(--text)}
@@ -132,7 +135,7 @@ code{background:#0b0f14;padding:1px 6px;border-radius:6px;font-size:12.5px;direc
 
 <!-- ───── السجل ───── -->
 <section class="view" id="v-hist">
-  <div class="seg" id="histSeg"><button data-d="7" class="act">7 أيام</button><button data-d="30">30 يوم</button><button data-d="365">سنة</button></div>
+  <div class="range"><label class="rf">من<input type="date" id="hFrom"></label><label class="rf">إلى<input type="date" id="hTo"></label></div>
   <div class="card chart"><h3>الإنتاج والاستهلاك اليومي (ك.و.س)</h3><div id="histChart"></div>
     <div class="legend"><span><i style="background:var(--sun);height:8px"></i>إنتاج</span><span><i style="background:var(--load);height:8px"></i>استهلاك</span></div></div>
   <div class="card"><h3>المجموع</h3><div class="stats">
@@ -144,7 +147,8 @@ code{background:#0b0f14;padding:1px 6px;border-radius:6px;font-size:12.5px;direc
 
 <!-- ───── الانقطاعات ───── -->
 <section class="view" id="v-out">
-  <div class="card"><h3>الكهرباء الوطنية — آخر 7 أيام</h3><div id="outTimeline"></div></div>
+  <div class="range"><label class="rf">من<input type="date" id="oFrom"></label><label class="rf">إلى<input type="date" id="oTo"></label></div>
+  <div class="card"><h3>الكهرباء الوطنية</h3><div id="outTimeline"></div></div>
   <div class="card"><table><thead><tr><th>اليوم</th><th>انقطعت</th><th>رجعت</th><th>المدة</th></tr></thead><tbody id="outBody"></tbody></table></div>
 </section>
 
@@ -158,7 +162,7 @@ code{background:#0b0f14;padding:1px 6px;border-radius:6px;font-size:12.5px;direc
 const PROJECT = "bxumslcuwunqkidutevk";
 const TZ = "Asia/Baghdad";
 const $ = (id) => document.getElementById(id);
-let live = null, histDays = 7;
+let live = null, outRange = null;
 
 /* ───────── data: read-only family endpoint ───────── */
 const API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-api?view=678387d0057f19ec279e6ec5";
@@ -166,6 +170,31 @@ async function fetchData(days){
   const r = await fetch(API + "&days=" + (days || 7), { cache: "no-store" });
   if (!r.ok) throw new Error(r.status === 403 ? "الرابط لم يعد صالحاً" : "خطأ في الاتصال (" + r.status + ")");
   return r.json();
+}
+
+/* ───────── date ranges (from / to, default = current week from Saturday) ───────── */
+const RANGE_API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-range?view=678387d0057f19ec279e6ec5";
+const DAY = 864e5, MAX_RANGE = 95;
+const keyOf = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+const dayStart = (key) => new Date(key + "T00:00:00+03:00").getTime();
+function weekStartKey(){
+  const t = keyOf(new Date()), dow = new Date(t + "T12:00:00+03:00").getUTCDay();   // 0 = Sunday … 6 = Saturday
+  return keyOf(new Date(dayStart(t) - ((dow + 1) % 7) * DAY));
+}
+function readRange(fromId, toId){
+  const today = keyOf(new Date());
+  let f = $(fromId).value || weekStartKey(), t = $(toId).value || today;
+  if (t > today) t = today;
+  if (f > t) [f, t] = [t, f];
+  const minF = keyOf(new Date(dayStart(t) - (MAX_RANGE - 1) * DAY));
+  if (f < minF) f = minF;
+  $(fromId).value = f; $(toId).value = t;
+  return { from: f, to: t };
+}
+async function fetchRange(r){
+  const res = await fetch(`${RANGE_API}&from=${r.from}&to=${r.to}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(res.status === 403 ? "الرابط لم يعد صالحاً" : "خطأ في الاتصال (" + res.status + ")");
+  return res.json();
 }
 
 /* ───────── formatting ───────── */
@@ -216,7 +245,6 @@ function renderNow(){
   const t = live.today || {};
   $("tPv").textContent = n1(t.pv_kwh); $("tLoad").textContent = n1(t.load_kwh); $("tGridH").textContent = n1(t.grid_hours);
   drawDay(s);
-  renderOutages();
 }
 
 function drawDay(s){
@@ -240,27 +268,30 @@ function drawDay(s){
     <path d="${path("soc", yS)}" fill="none" stroke="var(--bat)" stroke-width="1.6" stroke-dasharray="4 3"/>${bands}</svg>`;
 }
 
-/* ───────── render: outages ───────── */
-function renderOutages(){
-  const os = live.outages || [];
-  $("outBody").innerHTML = os.length ? os.map(o => `<tr><td>${dayName(o.started_at)}</td><td>${tm(o.started_at)}</td><td>${o.ended_at ? tm(o.ended_at) : "<b style='color:var(--bad)'>مستمر</b>"}</td><td>${dur((o.ended_at ? new Date(o.ended_at) : Date.now()) - new Date(o.started_at))}</td></tr>`).join("")
-    : `<tr><td colspan="4" class="empty">لا توجد انقطاعات مسجلة بعد</td></tr>`;
-  // 7-day timeline: one row per day, red = outage
-  const rows = [];
-  const fmtDay = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
-  for (let d = 0; d < 7; d++) {
-    const ref = new Date(Date.now() - d * 86400e3);
-    const key = fmtDay.format(ref);
-    const start = new Date(key + "T00:00:00+03:00").getTime(), end = start + 86400e3;
+/* ───────── render: outages (selected range) ───────── */
+async function loadOutages(){
+  const r = outRange = readRange("oFrom", "oTo");
+  try { renderOutages(await fetchRange(r), r); }
+  catch (e) { $("outTimeline").innerHTML = `<div class="empty">${e.message}</div>`; }
+}
+function renderOutages(data, r){
+  const os = data.outages || [], now = Date.now();
+  $("outBody").innerHTML = os.length ? os.map(o => `<tr><td>${dayName(o.started_at)}</td><td>${tm(o.started_at)}</td><td>${o.ended_at ? tm(o.ended_at) : "<b style='color:var(--bad)'>مستمر</b>"}</td><td>${dur((o.ended_at ? new Date(o.ended_at) : now) - new Date(o.started_at))}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">لا توجد انقطاعات في هذه الفترة</td></tr>`;
+  // one row per day (newest first), red = outage
+  const rows = [], todayKey = keyOf(new Date());
+  const since = data.since ? new Date(data.since).getTime() : now;
+  const n = Math.min(Math.round((dayStart(r.to) - dayStart(r.from)) / DAY) + 1, MAX_RANGE);
+  for (let d = 0; d < n; d++) {
+    const start = dayStart(r.to) - d * DAY, end = start + DAY, key = keyOf(new Date(start));
     let segs = "";
     for (const o of os) {
-      const a = Math.max(start, new Date(o.started_at).getTime()), b = Math.min(end, o.ended_at ? new Date(o.ended_at).getTime() : Date.now());
-      if (b > a) segs += `<i style="position:absolute;top:0;bottom:0;right:${(a - start) / 864e5 * 100}%;width:${(b - a) / 864e5 * 100}%;background:var(--bad)"></i>`;
+      const a = Math.max(start, new Date(o.started_at).getTime()), b = Math.min(end, o.ended_at ? new Date(o.ended_at).getTime() : now);
+      if (b > a) segs += `<i style="position:absolute;top:0;bottom:0;right:${(a - start) / DAY * 100}%;width:${(b - a) / DAY * 100}%;background:var(--bad)"></i>`;
     }
-    const since = live.since ? new Date(live.since).getTime() : Date.now();
-    const gs = Math.max(start, since), ge = Math.min(end, Date.now());
-    const gBar = ge > gs ? `<i style="position:absolute;top:0;bottom:0;right:${(gs - start) / 864e5 * 100}%;width:${(ge - gs) / 864e5 * 100}%;background:rgba(63,209,127,.35)"></i>` : "";
-    rows.push(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="width:74px;font-size:12px;color:var(--mute)">${d ? dayName(ref) : "اليوم"}</span>
+    const gs = Math.max(start, since), ge = Math.min(end, now);
+    const gBar = ge > gs ? `<i style="position:absolute;top:0;bottom:0;right:${(gs - start) / DAY * 100}%;width:${(ge - gs) / DAY * 100}%;background:rgba(63,209,127,.35)"></i>` : "";
+    rows.push(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="width:74px;font-size:12px;color:var(--mute)">${key === todayKey ? "اليوم" : dayName(start + 12 * 3600e3)}</span>
       <div style="flex:1;height:14px;border-radius:4px;background:#0b0f14;position:relative;overflow:hidden">${gBar}${segs}</div></div>`);
   }
   $("outTimeline").innerHTML = rows.join("") + `<div class="legend" style="justify-content:space-between"><span>12 ص</span><span>12 ظ</span><span>12 ص</span></div><div class="legend"><span><i style="background:rgba(63,209,127,.6);height:8px"></i>وطنية موجودة</span><span><i style="background:var(--bad);height:8px"></i>مقطوعة</span><span><i style="background:#0b0f14;border:1px solid var(--line);height:8px"></i>لا توجد بيانات</span></div><div class="sub" style="margin-top:6px">يبدأ التسجيل من لحظة ربط المنظومة.</div>`;
@@ -270,7 +301,7 @@ function renderOutages(){
 async function loadHistory(){
   $("histChart").innerHTML = `<div class="empty"><span class="spin"></span></div>`;
   try {
-    const d = (await fetchData(histDays)).history || [];
+    const d = (await fetchRange(readRange("hFrom", "hTo"))).history || [];
     const tot = (k) => d.reduce((a, r) => a + (Number(r[k]) || 0), 0);
     $("hPv").textContent = n1(tot("pv_kwh")); $("hLoad").textContent = n1(tot("load_kwh"));
     $("hGrid").textContent = d.length ? n1(tot("grid_hours") / d.length) : "—";
@@ -300,11 +331,16 @@ function goTab(v){
   document.querySelectorAll(".view").forEach(s => s.classList.toggle("act", s.id === "v-" + v));
   try { history.replaceState(null, "", "#" + v); } catch {}
   if (v === "hist") loadHistory();
+  if (v === "out") loadOutages();
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) goTab(b.dataset.v); });
-$("histSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return;
-  histDays = +b.dataset.d; document.querySelectorAll("#histSeg button").forEach(x => x.classList.toggle("act", x === b)); loadHistory(); });
+["hFrom", "hTo"].forEach(id => $(id).addEventListener("change", loadHistory));
+["oFrom", "oTo"].forEach(id => $(id).addEventListener("change", loadOutages));
+(function initRanges(){
+  const today = keyOf(new Date()), ws = weekStartKey();
+  for (const [f, t] of [["hFrom", "hTo"], ["oFrom", "oTo"]]) { $(f).value = ws; $(t).value = today; $(f).max = today; $(t).max = today; }
+})();
 
 $("refreshBtn").addEventListener("click", async () => {
   const b = $("refreshBtn"); b.disabled = true; b.innerHTML = `<span class="spin"></span>`;
@@ -316,7 +352,11 @@ $("refreshBtn").addEventListener("click", async () => {
   const h = (location.hash || "").slice(1);
   if (["hist", "out"].includes(h)) goTab(h);
   await loadLive();
-  setInterval(() => { if (!document.hidden) loadLive(); }, 60000);
+  setInterval(() => {
+    if (document.hidden) return;
+    loadLive();
+    if ($("v-out").classList.contains("act") && outRange && outRange.to >= keyOf(new Date())) loadOutages();
+  }, 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadLive(); });
 })();
 </script>

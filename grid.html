@@ -131,6 +131,11 @@
   .sheet h4{font-size:17px;margin-bottom:8px}
   .sheet ol{padding-inline-start:20px;line-height:2;font-size:14.5px}
   .sheet .close{margin-top:12px;width:100%;border:none;border-radius:12px;padding:11px;font:inherit;font-weight:600;background:var(--accent);color:#fff;cursor:pointer}
+  .range{display:flex;gap:8px;margin-bottom:10px}
+  .rf{flex:1;min-width:0;display:flex;align-items:center;gap:6px;background:var(--seg-bg);border:1px solid var(--glass-brd);border-radius:13px;padding:4px 10px;
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  .rf span{flex:none;font-size:12.5px;font-weight:600;color:var(--mute)}
+  .rf input{flex:1;min-width:0;width:100%;border:none;background:transparent;font:inherit;font-size:14px;color:var(--text);padding:6px 0;outline:none}
   .err{background:var(--offbg);border:1px solid var(--offbrd);color:var(--off);border-radius:12px;padding:12px;text-align:center;font-size:14px;display:none}
 </style>
 </head>
@@ -148,18 +153,10 @@
     </div>
   </div>
 
-  <!-- period selector -->
-  <div class="seg" id="seg">
-    <button data-m="w1" class="act">أسبوع</button>
-    <button data-m="w2">أسبوعين</button>
-    <button data-m="w3">٣ أسابيع</button>
-    <button data-m="month">الشهر</button>
-    <button data-m="custom">مخصّص</button>
-  </div>
-  <div class="custom" id="custom">
-    <div class="fld"><label>من</label><input type="date" id="fromD"></div>
-    <div class="fld"><label>إلى</label><input type="date" id="toD"></div>
-    <button class="go" id="goBtn">عرض</button>
+  <!-- period: from / to (default = current week, Saturday → today) -->
+  <div class="range">
+    <label class="rf"><span>من</span><input type="date" id="fromD"></label>
+    <label class="rf"><span>إلى</span><input type="date" id="toD"></label>
   </div>
 
   <div class="card">
@@ -201,7 +198,6 @@ const API = "https://bxumslcuwunqkidutevk.supabase.co/functions/v1/solar-grid?k=
 const TZ = "Asia/Baghdad";
 const DAY = 86400e3;
 const $ = (id) => document.getElementById(id);
-let mode = "w1";
 let selDay = "";                 // selected day key (from timeline click), "" = all
 let lastOuts = [], lastRange = null;
 
@@ -222,22 +218,24 @@ function relDay(d){
 const keyOf = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
 const dayStart = (key) => new Date(key + "T00:00:00+03:00").getTime();
 
+const MAX_RANGE = 95;   // days
+// Saturday of the current week (the Iraqi week starts on Saturday)
+function weekStartKey(){
+  const t = keyOf(new Date()), dow = new Date(t + "T12:00:00+03:00").getUTCDay();   // 0 = Sunday … 6 = Saturday
+  return keyOf(new Date(dayStart(t) - ((dow + 1) % 7)*DAY));
+}
+// Read the from/to fields (swap if reversed, no future dates, at most MAX_RANGE days).
 function range(){
   const today = keyOf(new Date());
-  if (mode === "custom"){
-    let f = $("fromD").value || today, t = $("toD").value || today;
-    if (f > t) [f, t] = [t, f];
-    return { from:f, to:t, title:`${f} ← ${t}` };
-  }
-  if (mode === "month"){
-    const p = new Intl.DateTimeFormat("en-CA",{ timeZone:TZ, year:"numeric", month:"2-digit" }).format(new Date());
-    const [y,m] = p.split("-").map(Number);
-    const last = new Date(y, m, 0).getDate(), mm = String(m).padStart(2,"0");
-    return { from:`${y}-${mm}-01`, to:`${y}-${mm}-${String(last).padStart(2,"0")}`, title:"الشهر الحالي" };
-  }
-  const n = mode === "w1" ? 7 : mode === "w2" ? 14 : 21;
-  return { from: keyOf(new Date(Date.now() - (n-1)*DAY)), to: today, title: mode==="w1"?"أسبوع":mode==="w2"?"أسبوعين":"٣ أسابيع" };
+  let f = $("fromD").value || weekStartKey(), t = $("toD").value || today;
+  if (t > today) t = today;
+  if (f > t) [f, t] = [t, f];
+  const minF = keyOf(new Date(dayStart(t) - (MAX_RANGE - 1)*DAY));
+  if (f < minF) f = minF;
+  $("fromD").value = f; $("toD").value = t;
+  return { from:f, to:t };
 }
+const live = () => !!lastRange && lastRange.to >= keyOf(new Date());   // auto-refresh only if the range reaches today
 
 async function load(){
   const r = range();
@@ -278,7 +276,7 @@ function render(d, r){
 
   // timeline rows: اليوم | شريط | عدد | إجمالي المدة
   const sFrom = dayStart(r.from), sTo = dayStart(r.to);
-  const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, 62);
+  const n = Math.min(Math.round((sTo - sFrom)/DAY) + 1, MAX_RANGE);
   const todayStart = dayStart(keyOf(new Date()));
   const validKeys = new Set();
   const rows = [];
@@ -323,15 +321,8 @@ function renderLog(){
 
 function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span style="color:var(--mute)">…</span></td></tr>`; }
 
-// period selector
-$("seg").addEventListener("click", (e) => {
-  const btn = e.target.closest("button"); if(!btn) return;
-  mode = btn.dataset.m; selDay = "";
-  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("act", x === btn));
-  $("custom").classList.toggle("show", mode === "custom");
-  if(mode !== "custom"){ busy(); load(); }
-});
-$("goBtn").addEventListener("click", () => { selDay = ""; busy(); load(); });
+// period: reload when either date changes
+["fromD", "toD"].forEach(id => $(id).addEventListener("change", () => { selDay = ""; busy(); load(); }));
 
 // click a timeline day → filter the log (click again to clear)
 $("timeline").addEventListener("click", (e) => {
@@ -342,9 +333,9 @@ $("timeline").addEventListener("click", (e) => {
 });
 
 (function initDates(){
-  const today = keyOf(new Date()), weekAgo = keyOf(new Date(Date.now() - 6*DAY));
-  $("toD").value = today; $("toD").max = today;
-  $("fromD").value = weekAgo; $("fromD").max = today;
+  const today = keyOf(new Date());
+  $("fromD").value = weekStartKey(); $("toD").value = today;
+  $("fromD").max = today; $("toD").max = today;
 })();
 
 // ===== theme (day / night) =====
@@ -393,8 +384,8 @@ $("timeline").addEventListener("click", (e) => {
 
 selDay = keyOf(new Date());   // focus on the current day when the app opens
 load();
-setInterval(() => { if(!document.hidden && mode !== "custom") load(); }, 60000);
-document.addEventListener("visibilitychange", () => { if(!document.hidden && mode !== "custom") load(); });
+setInterval(() => { if(!document.hidden && live()) load(); }, 60000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden && live()) load(); });
 </script>
 </body>
 </html>
