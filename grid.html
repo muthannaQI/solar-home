@@ -13,7 +13,7 @@
 <style>
   :root{
     color-scheme:light;
-    --text:#0b2a4a; --mute:#5a6b80; --line:rgba(13,42,74,.12);
+    --text:#0a0a0a; --mute:#4b5157; --line:rgba(13,42,74,.14);
     --bg1:#eaf1fb; --bg2:#dce8fb; --blob1:rgba(96,165,250,.40); --blob2:rgba(45,212,191,.28);
     --glass:rgba(255,255,255,.55); --glass-brd:rgba(255,255,255,.7); --glass-sh:0 8px 30px rgba(13,42,74,.10);
     --accent:#2563eb;
@@ -27,7 +27,7 @@
   }
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
     color-scheme:dark;
-    --text:#e7eef7; --mute:#9db0c6; --line:rgba(255,255,255,.12);
+    --text:#ffffff; --mute:#c3ccd6; --line:rgba(255,255,255,.14);
     --bg1:#0b1222; --bg2:#0e1830; --blob1:rgba(59,130,246,.22); --blob2:rgba(16,185,129,.16);
     --glass:rgba(20,28,44,.55); --glass-brd:rgba(255,255,255,.10); --glass-sh:0 8px 30px rgba(0,0,0,.40);
     --accent:#3b82f6;
@@ -40,7 +40,7 @@
   } }
   :root[data-theme="dark"]{
     color-scheme:dark;
-    --text:#e7eef7; --mute:#9db0c6; --line:rgba(255,255,255,.12);
+    --text:#ffffff; --mute:#c3ccd6; --line:rgba(255,255,255,.14);
     --bg1:#0b1222; --bg2:#0e1830; --blob1:rgba(59,130,246,.22); --blob2:rgba(16,185,129,.16);
     --glass:rgba(20,28,44,.55); --glass-brd:rgba(255,255,255,.10); --glass-sh:0 8px 30px rgba(0,0,0,.40);
     --accent:#3b82f6;
@@ -229,7 +229,7 @@ async function load(){
     if(!res.ok) throw new Error(res.status === 403 ? "الرابط لم يعد صالحاً" : "تعذّر الاتصال ("+res.status+")");
     render(await res.json(), r);
     $("err").style.display = "none";
-  }catch(e){ $("updated").textContent = "غير متصل"; $("err").textContent = e.message; $("err").style.display = "block"; }
+  }catch(e){ const up=$("updated"); up.textContent = "⚠️ غير متصل"; up.style.display = ""; $("err").textContent = e.message; $("err").style.display = "block"; }
 }
 
 function render(d, r){
@@ -237,9 +237,13 @@ function render(d, r){
   const now = Date.now();
   const since = d.since ? new Date(d.since).getTime() : Infinity;
 
+  // updates run every minute, so only surface the pill when data is stale/missing
   const ok = d.last_ok ? new Date(d.last_ok) : null;
   const ageMin = ok ? (now - ok.getTime())/60000 : null;
-  $("updated").textContent = ok ? (ageMin > 15 ? "⚠️ قبل " + dur(now-ok.getTime()) : "🕑 " + tm(d.last_ok)) : "—";
+  const up = $("updated");
+  if (ok && ageMin > 6){ up.textContent = "⚠️ قبل " + dur(now - ok.getTime()); up.style.display = ""; }
+  else if (!ok){ up.textContent = "⚠️ لا قراءات"; up.style.display = ""; }
+  else { up.style.display = "none"; }
 
   const b = $("banner"), open = outs.find(o => !o.ended_at), lastEnded = outs.find(o => o.ended_at);
   if(d.grid_on === true){
