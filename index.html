@@ -65,6 +65,10 @@ td{padding:8px 4px;border-bottom:1px solid #20262e;font-variant-numeric:tabular-
 .range{display:flex;gap:8px;margin-bottom:12px}
 .range .rf{flex:1;min-width:0;display:flex;align-items:center;gap:6px;margin:0;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:2px 10px;color:var(--mute);font-size:12.5px}
 .range .rf input{flex:1;min-width:0;width:100%;background:transparent;border:0;border-radius:0;padding:8px 0;font-size:14px;color:var(--text);color-scheme:dark}
+.range .rf{position:relative}
+.range .rf .dv{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:var(--text);padding:7px 0;direction:ltr;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.range .rf .ci{flex:none;font-size:14px;opacity:.75}
+.range .rf input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;margin:0;border:0}
 .seg{display:flex;background:var(--card2);border-radius:11px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;background:none;border:0;color:var(--mute);font:inherit;font-size:13px;padding:7px;border-radius:9px;cursor:pointer}
 .seg button.act{background:var(--line);color:var(--text)}
@@ -135,7 +139,7 @@ code{background:#0b0f14;padding:1px 6px;border-radius:6px;font-size:12.5px;direc
 
 <!-- ───── السجل ───── -->
 <section class="view" id="v-hist">
-  <div class="range"><label class="rf">من<input type="date" id="hFrom"></label><label class="rf">إلى<input type="date" id="hTo"></label></div>
+  <div class="range"><label class="rf"><span>من</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="hFrom"></label><label class="rf"><span>إلى</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="hTo"></label></div>
   <div class="card chart"><h3>الإنتاج والاستهلاك اليومي (ك.و.س)</h3><div id="histChart"></div>
     <div class="legend"><span><i style="background:var(--sun);height:8px"></i>إنتاج</span><span><i style="background:var(--load);height:8px"></i>استهلاك</span></div></div>
   <div class="card"><h3>المجموع</h3><div class="stats">
@@ -147,7 +151,7 @@ code{background:#0b0f14;padding:1px 6px;border-radius:6px;font-size:12.5px;direc
 
 <!-- ───── الانقطاعات ───── -->
 <section class="view" id="v-out">
-  <div class="range"><label class="rf">من<input type="date" id="oFrom"></label><label class="rf">إلى<input type="date" id="oTo"></label></div>
+  <div class="range"><label class="rf"><span>من</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="oFrom"></label><label class="rf"><span>إلى</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="oTo"></label></div>
   <div class="card"><h3>الكهرباء الوطنية</h3><div id="outTimeline"></div></div>
   <div class="card"><table><thead><tr><th>اليوم</th><th>انقطعت</th><th>رجعت</th><th>المدة</th></tr></thead><tbody id="outBody"></tbody></table></div>
 </section>
@@ -188,7 +192,7 @@ function readRange(fromId, toId){
   if (f > t) [f, t] = [t, f];
   const minF = keyOf(new Date(dayStart(t) - (MAX_RANGE - 1) * DAY));
   if (f < minF) f = minF;
-  $(fromId).value = f; $(toId).value = t;
+  $(fromId).value = f; $(toId).value = t; syncDates();
   return { from: f, to: t };
 }
 async function fetchRange(r){
@@ -335,11 +339,24 @@ function goTab(v){
   window.scrollTo(0, 0);
 }
 $("tabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) goTab(b.dataset.v); });
+// Show dates as yyyy/mm/dd (native date fields follow the phone's format, so they stay invisible on top)
+function syncDates(){
+  document.querySelectorAll(".rf input[type=date]").forEach(i => {
+    const v = i.parentElement.querySelector(".dv");
+    if (v) v.textContent = i.value ? i.value.replace(/-/g, "/") : "—";
+  });
+}
+document.querySelectorAll(".rf input[type=date]").forEach(i => {
+  i.addEventListener("input", syncDates);
+  i.addEventListener("change", syncDates);
+  i.addEventListener("click", () => { try { i.showPicker(); } catch (e) {} });
+});
 ["hFrom", "hTo"].forEach(id => $(id).addEventListener("change", loadHistory));
 ["oFrom", "oTo"].forEach(id => $(id).addEventListener("change", loadOutages));
 (function initRanges(){
   const today = keyOf(new Date()), ws = weekStartKey();
   for (const [f, t] of [["hFrom", "hTo"], ["oFrom", "oTo"]]) { $(f).value = ws; $(t).value = today; $(f).max = today; $(t).max = today; }
+  syncDates();
 })();
 
 $("refreshBtn").addEventListener("click", async () => {

@@ -136,6 +136,10 @@
     -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
   .rf span{flex:none;font-size:12.5px;font-weight:600;color:var(--mute)}
   .rf input{flex:1;min-width:0;width:100%;border:none;background:transparent;font:inherit;font-size:14px;color:var(--text);padding:6px 0;outline:none}
+  .rf{position:relative}
+  .rf .dv{flex:1;min-width:0;font-size:14.5px;font-weight:600;color:var(--text);padding:7px 0;direction:ltr;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rf .ci{flex:none;font-size:14px;opacity:.75}
+  .rf input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;margin:0;border:0}
   .err{background:var(--offbg);border:1px solid var(--offbrd);color:var(--off);border-radius:12px;padding:12px;text-align:center;font-size:14px;display:none}
 </style>
 </head>
@@ -155,8 +159,8 @@
 
   <!-- period: from / to (default = current week, Saturday → today) -->
   <div class="range">
-    <label class="rf"><span>من</span><input type="date" id="fromD"></label>
-    <label class="rf"><span>إلى</span><input type="date" id="toD"></label>
+    <label class="rf"><span>من</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="fromD"></label>
+    <label class="rf"><span>إلى</span><b class="dv"></b><span class="ci">📅</span><input type="date" id="toD"></label>
   </div>
 
   <div class="card">
@@ -232,7 +236,7 @@ function range(){
   if (f > t) [f, t] = [t, f];
   const minF = keyOf(new Date(dayStart(t) - (MAX_RANGE - 1)*DAY));
   if (f < minF) f = minF;
-  $("fromD").value = f; $("toD").value = t;
+  $("fromD").value = f; $("toD").value = t; syncDates();
   return { from:f, to:t };
 }
 const live = () => !!lastRange && lastRange.to >= keyOf(new Date());   // auto-refresh only if the range reaches today
@@ -322,6 +326,18 @@ function renderLog(){
 function busy(){ $("outBody").innerHTML = `<tr><td colspan="4" class="empty"><span style="color:var(--mute)">…</span></td></tr>`; }
 
 // period: reload when either date changes
+// Show dates as yyyy/mm/dd (native date fields follow the phone's format, so they stay invisible on top)
+function syncDates(){
+  document.querySelectorAll(".rf input[type=date]").forEach(i => {
+    const v = i.parentElement.querySelector(".dv");
+    if (v) v.textContent = i.value ? i.value.replace(/-/g, "/") : "—";
+  });
+}
+document.querySelectorAll(".rf input[type=date]").forEach(i => {
+  i.addEventListener("input", syncDates);
+  i.addEventListener("change", syncDates);
+  i.addEventListener("click", () => { try { i.showPicker(); } catch (e) {} });
+});
 ["fromD", "toD"].forEach(id => $(id).addEventListener("change", () => { selDay = ""; busy(); load(); }));
 
 // click a timeline day → filter the log (click again to clear)
@@ -336,6 +352,7 @@ $("timeline").addEventListener("click", (e) => {
   const today = keyOf(new Date());
   $("fromD").value = weekStartKey(); $("toD").value = today;
   $("fromD").max = today; $("toD").max = today;
+  syncDates();
 })();
 
 // ===== theme (day / night) =====
