@@ -207,6 +207,8 @@ function setVal(el, w){ const f = fmtW(w); el.innerHTML = f ? `${f[0]}<small>${f
 const tm = (d) => new Date(d).toLocaleTimeString("ar-IQ", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
 const dayName = (d) => new Date(d).toLocaleDateString("ar-IQ", { timeZone: TZ, weekday: "short", day: "numeric", month: "numeric" });
 const ar = (n) => Number(n).toLocaleString("ar-IQ");
+function relDay(d){ const f = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }); const a = f.format(new Date(d)), t = f.format(new Date()), y = f.format(new Date(Date.now() - 864e5));
+  return a === t ? "" : a === y ? "أمس " : dayName(d) + " "; }
 function dur(ms){ const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60); return h ? `${ar(h)} س ${ar(m % 60)} د` : `${ar(m)} د`; }
 function ago(d){ const ms = Date.now() - new Date(d).getTime(); return ms < 90e3 ? "الآن" : "قبل " + dur(ms); }
 const n1 = (v) => v == null ? "—" : Number(v).toLocaleString("ar-IQ", { maximumFractionDigits: 1 });
@@ -226,7 +228,7 @@ function renderNow(){
   else if (L.g) {
     gb.className = "grid-banner on"; $("gridTitle").textContent = "الوطنية موجودة";
     const last = (live.outages || []).find(o => o.ended_at);
-    $("gridSub").textContent = (L.gv ? L.gv + " فولت" : "") + (last ? ` · رجعت ${tm(last.ended_at)}` : "");
+    $("gridSub").textContent = (L.gv ? L.gv + " فولت" : "") + (last ? ` · رجعت ${relDay(last.ended_at)}${tm(last.ended_at)}` : "");
   } else {
     gb.className = "grid-banner off"; $("gridTitle").textContent = "الوطنية مقطوعة";
     $("gridSub").textContent = live.outage ? `منذ ${dur(Date.now() - new Date(live.outage.started_at))} · انقطعت ${tm(live.outage.started_at)}` : "";
@@ -240,8 +242,11 @@ function renderNow(){
   if (L && L.bw != null && Math.abs(L.bw) > 15) bex.push((L.bw > 0 ? "تفريغ " : "شحن ") + fmtW(Math.abs(L.bw)).join(" "));
   if (L && L.bv != null) bex.push(L.bv + " فولت");
   $("nBatEx").textContent = bex.join(" · ") || " ";
-  setVal($("nGrid"), L && L.gw);
-  $("nGridEx").textContent = L && L.gv != null ? L.gv + " فولت" : " ";
+  if (L && L.gw != null) { setVal($("nGrid"), L.gw); $("nGridEx").textContent = L.gv != null ? L.gv + " فولت" : " "; }
+  else { // this inverter reports grid voltage only, not grid watts
+    $("nGrid").innerHTML = L && L.gv != null ? `${Math.round(L.gv)}<small>فولت</small>` : "—";
+    $("nGridEx").textContent = L && L.g === false ? "مقطوعة" : L && L.g ? "موجودة" : " ";
+  }
   $("nLoadEx").textContent = L && L.ov != null ? "خرج " + L.ov + " فولت" : " ";
   const peak = s.reduce((m, r) => Math.max(m, r.pv || 0), 0);
   $("nPvEx").textContent = peak ? "أعلى اليوم " + fmtW(peak).join(" ") : " ";
