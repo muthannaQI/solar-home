@@ -256,11 +256,11 @@ function render(d, r){
   const now = Date.now();
   const since = d.since ? new Date(d.since).getTime() : Infinity;
 
-  // updates run every minute, so only surface the pill when data is stale/missing
+  // the dongle sends a reading about every 5 min (gaps up to ~11 min seen), so only warn past 12 min
   const ok = d.last_ok ? new Date(d.last_ok) : null;
   const ageMin = ok ? (now - ok.getTime())/60000 : null;
   const up = $("updated");
-  if (ok && ageMin > 6){ up.textContent = "⚠️ قبل " + dur(now - ok.getTime()); up.style.display = ""; }
+  if (ok && ageMin > 12){ up.textContent = "⚠️ قبل " + dur(now - ok.getTime()); up.style.display = ""; }
   else if (!ok){ up.textContent = "⚠️ لا قراءات"; up.style.display = ""; }
   else { up.style.display = "none"; }
 
